@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require('jsonwebtoken');
+const sendError = require('../utils/errorHandler');
 
 const signup = async (req, res) => {
     try {
@@ -17,7 +18,7 @@ const signup = async (req, res) => {
         await newUser.save();
         res.status(201).json({ message: "Signup successful", user: { name: newUser.name, email: newUser.email } });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        return sendError(res, error);
     }
 };
 
@@ -46,7 +47,7 @@ const login = async (req, res) => {
             user: { name: user.name, email: user.email }
         });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+       return sendError(res, error);
     }
 };
 

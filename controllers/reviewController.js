@@ -1,7 +1,7 @@
 const Review = require('../models/Review');
-const reviewCodeWithClaude = require("../services/claudeService");
 const reviewCodeWithGemini = require("../services/geminiService");
 const crypto = require('crypto');
+const sendError = require('../utils/errorHandler');
 
 const formatReview = (review) => ({
   id: review._id,
@@ -42,8 +42,7 @@ const createReview = async (req, res) => {
     res.status(201).json(formatReview(newReview));
 
   } catch (error) {
-    console.error("AI Error:", error.response?.data || error.message);
-    res.status(500).json({ message: error.message });
+    return sendError(res, error);
   }
 };
 
@@ -65,7 +64,7 @@ const getReviews = async (req, res) => {
       currentPage: page
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return sendError(res, error);
   }
 };
 
@@ -83,7 +82,7 @@ const getReviewById = async (req, res) => {
 
     res.status(200).json(formatReview(review));
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return sendError(res, error);
   }
 };
 
@@ -103,7 +102,7 @@ const deleteReview = async (req, res) => {
 
     res.status(200).json({ message: "Review deleted" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return sendError(res, error);
   }
 };
 
