@@ -1,11 +1,21 @@
 const Review = require('../models/Review');
-const reviewCodeWithClaude = require('../services/claudeService');
+const reviewCodeWithClaude = require("../services/claudeService");
+const reviewCodeWithGemini = require("../services/geminiService");
+
+const formatReview = (review) => ({
+  id: review._id,
+  language: review.language,
+  code: review.code,
+  score: review.score,
+  issues: review.issues,
+  createdAt: review.createdAt
+});
 
 const createReview = async (req, res) => {
   try {
     const { language, code } = req.body;
 
-    const aiResult = await reviewCodeWithClaude(code, language);
+    const aiResult = await reviewCodeWithGemini(code, language);
 
     const newReview = new Review({
       language,
@@ -17,17 +27,18 @@ const createReview = async (req, res) => {
 
     await newReview.save();
 
-    res.status(201).json(newReview);
+    res.status(201).json(formatReview(newReview));
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Claude API Error:", error.response?.data || error.message);
+  res.status(500).json({ message: error.message });
   }
 };
 
 const getReviews = async (req, res) => {
   try {
     const reviews = await Review.find({ user: req.userId });
-    res.status(200).json(reviews);
+    res.status(200).json(reviews.map(formatReview));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -45,7 +56,7 @@ const getReviewById = async (req, res) => {
       return res.status(403).json({ message: "Not authorized to view this review" });
     }
 
-    res.status(200).json(review);
+    res.status(200).json(formatReview(review));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
