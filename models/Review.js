@@ -1,22 +1,22 @@
 const mongoose = require("mongoose");
 
 const reviewSchema = new mongoose.Schema({
-    language:{
+    language: {
         type: String,
         required: true
     },
-    code:{
+    code: {
         type: String,
         required: true
     },
-    score:{
+    score: {
         type: Number
     },
-    createdAt:{
+    createdAt: {
         type: Date,
         default: Date.now
     },
-    user:{
+    user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
     },
@@ -26,7 +26,10 @@ const reviewSchema = new mongoose.Schema({
             description: String,
             suggestedFix: String
         }
-        ]
+    ],
+    codeHash: {
+        type: String
+    }
 });
 
 const Review = mongoose.model("Review", reviewSchema);

@@ -1,6 +1,7 @@
 const Review = require('../models/Review');
 const reviewCodeWithClaude = require("../services/claudeService");
 const reviewCodeWithGemini = require("../services/geminiService");
+const crypto = require('crypto');
 
 const formatReview = (review) => ({
   id: review._id,
@@ -15,6 +16,16 @@ const createReview = async (req, res) => {
   try {
     const { language, code } = req.body;
 
+   
+    const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+
+    const cachedReview = await Review.findOne({ codeHash, language, user: req.userId });
+    console.log("codeHash:", codeHash, "| Cache found:", !!cachedReview);
+
+    if (cachedReview) {
+      return res.status(200).json(formatReview(cachedReview));
+    }
+
     const aiResult = await reviewCodeWithGemini(code, language);
 
     const newReview = new Review({
@@ -22,7 +33,8 @@ const createReview = async (req, res) => {
       code,
       score: aiResult.score,
       issues: aiResult.issues,
-      user: req.userId
+      user: req.userId,
+      codeHash
     });
 
     await newReview.save();
@@ -30,15 +42,28 @@ const createReview = async (req, res) => {
     res.status(201).json(formatReview(newReview));
 
   } catch (error) {
-    console.error("Claude API Error:", error.response?.data || error.message);
-  res.status(500).json({ message: error.message });
+    console.error("AI Error:", error.response?.data || error.message);
+    res.status(500).json({ message: error.message });
   }
 };
 
 const getReviews = async (req, res) => {
   try {
-    const reviews = await Review.find({ user: req.userId });
-    res.status(200).json(reviews.map(formatReview));
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const reviews = await Review.find({ user: req.userId })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const totalReviews = await Review.countDocuments({ user: req.userId });
+
+    res.status(200).json({
+      reviews: reviews.map(formatReview),
+      totalPages: Math.ceil(totalReviews / limit),
+      currentPage: page
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
