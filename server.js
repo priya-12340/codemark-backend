@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { generalLimiter } = require('./middleware/rateLimiter');
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
@@ -8,6 +9,7 @@ const reviewRoutes = require('./routes/reviewRoutes');
 
 const app = express();
 
+app.use(generalLimiter);
 app.use(cors());
 app.use(express.json());
 app.use(logRequest);
