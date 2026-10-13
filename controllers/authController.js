@@ -6,12 +6,18 @@ const sendError = require('../utils/errorHandler');
 const signup = async (req, res) => {
     try {
         const { name, email, password } = req.body;
+         if (typeof email !== 'string' || typeof name !== 'string') {
+             return res.status(400).json({ message: 'Invalid input' });
+        }
+        if (typeof password !== 'string' || password.length < 8) {
+            return res.status(400).json({ message: 'Password must be at least 8 characters' });
+        }
 
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: "Email already registered" });
         }
-
+       
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = new User({ name, email, password: hashedPassword });
